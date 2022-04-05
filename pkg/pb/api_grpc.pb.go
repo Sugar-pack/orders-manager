@@ -22,8 +22,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OrdersManagerServiceClient interface {
-	ReceiveOrder(ctx context.Context, in *Order, opts ...grpc.CallOption) (*OrderTnxResponse, error)
-	ReceiveConfirmation(ctx context.Context, in *Confirmation, opts ...grpc.CallOption) (*ConfirmationResponse, error)
+	InsertOrder(ctx context.Context, in *Order, opts ...grpc.CallOption) (*OrderTnxResponse, error)
+	SendConfirmation(ctx context.Context, in *Confirmation, opts ...grpc.CallOption) (*ConfirmationResponse, error)
 	GetOrder(ctx context.Context, in *GetOrderRequest, opts ...grpc.CallOption) (*OrderResponse, error)
 }
 
@@ -35,18 +35,18 @@ func NewOrdersManagerServiceClient(cc grpc.ClientConnInterface) OrdersManagerSer
 	return &ordersManagerServiceClient{cc}
 }
 
-func (c *ordersManagerServiceClient) ReceiveOrder(ctx context.Context, in *Order, opts ...grpc.CallOption) (*OrderTnxResponse, error) {
+func (c *ordersManagerServiceClient) InsertOrder(ctx context.Context, in *Order, opts ...grpc.CallOption) (*OrderTnxResponse, error) {
 	out := new(OrderTnxResponse)
-	err := c.cc.Invoke(ctx, "/pb.OrdersManagerService/ReceiveOrder", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/pb.OrdersManagerService/InsertOrder", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *ordersManagerServiceClient) ReceiveConfirmation(ctx context.Context, in *Confirmation, opts ...grpc.CallOption) (*ConfirmationResponse, error) {
+func (c *ordersManagerServiceClient) SendConfirmation(ctx context.Context, in *Confirmation, opts ...grpc.CallOption) (*ConfirmationResponse, error) {
 	out := new(ConfirmationResponse)
-	err := c.cc.Invoke(ctx, "/pb.OrdersManagerService/ReceiveConfirmation", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/pb.OrdersManagerService/SendConfirmation", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -66,8 +66,8 @@ func (c *ordersManagerServiceClient) GetOrder(ctx context.Context, in *GetOrderR
 // All implementations must embed UnimplementedOrdersManagerServiceServer
 // for forward compatibility
 type OrdersManagerServiceServer interface {
-	ReceiveOrder(context.Context, *Order) (*OrderTnxResponse, error)
-	ReceiveConfirmation(context.Context, *Confirmation) (*ConfirmationResponse, error)
+	InsertOrder(context.Context, *Order) (*OrderTnxResponse, error)
+	SendConfirmation(context.Context, *Confirmation) (*ConfirmationResponse, error)
 	GetOrder(context.Context, *GetOrderRequest) (*OrderResponse, error)
 	mustEmbedUnimplementedOrdersManagerServiceServer()
 }
@@ -76,11 +76,11 @@ type OrdersManagerServiceServer interface {
 type UnimplementedOrdersManagerServiceServer struct {
 }
 
-func (UnimplementedOrdersManagerServiceServer) ReceiveOrder(context.Context, *Order) (*OrderTnxResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReceiveOrder not implemented")
+func (UnimplementedOrdersManagerServiceServer) InsertOrder(context.Context, *Order) (*OrderTnxResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method InsertOrder not implemented")
 }
-func (UnimplementedOrdersManagerServiceServer) ReceiveConfirmation(context.Context, *Confirmation) (*ConfirmationResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReceiveConfirmation not implemented")
+func (UnimplementedOrdersManagerServiceServer) SendConfirmation(context.Context, *Confirmation) (*ConfirmationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendConfirmation not implemented")
 }
 func (UnimplementedOrdersManagerServiceServer) GetOrder(context.Context, *GetOrderRequest) (*OrderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOrder not implemented")
@@ -98,38 +98,38 @@ func RegisterOrdersManagerServiceServer(s grpc.ServiceRegistrar, srv OrdersManag
 	s.RegisterService(&OrdersManagerService_ServiceDesc, srv)
 }
 
-func _OrdersManagerService_ReceiveOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _OrdersManagerService_InsertOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Order)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrdersManagerServiceServer).ReceiveOrder(ctx, in)
+		return srv.(OrdersManagerServiceServer).InsertOrder(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pb.OrdersManagerService/ReceiveOrder",
+		FullMethod: "/pb.OrdersManagerService/InsertOrder",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrdersManagerServiceServer).ReceiveOrder(ctx, req.(*Order))
+		return srv.(OrdersManagerServiceServer).InsertOrder(ctx, req.(*Order))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OrdersManagerService_ReceiveConfirmation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _OrdersManagerService_SendConfirmation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Confirmation)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrdersManagerServiceServer).ReceiveConfirmation(ctx, in)
+		return srv.(OrdersManagerServiceServer).SendConfirmation(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pb.OrdersManagerService/ReceiveConfirmation",
+		FullMethod: "/pb.OrdersManagerService/SendConfirmation",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrdersManagerServiceServer).ReceiveConfirmation(ctx, req.(*Confirmation))
+		return srv.(OrdersManagerServiceServer).SendConfirmation(ctx, req.(*Confirmation))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -160,12 +160,12 @@ var OrdersManagerService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*OrdersManagerServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "ReceiveOrder",
-			Handler:    _OrdersManagerService_ReceiveOrder_Handler,
+			MethodName: "InsertOrder",
+			Handler:    _OrdersManagerService_InsertOrder_Handler,
 		},
 		{
-			MethodName: "ReceiveConfirmation",
-			Handler:    _OrdersManagerService_ReceiveConfirmation_Handler,
+			MethodName: "SendConfirmation",
+			Handler:    _OrdersManagerService_SendConfirmation_Handler,
 		},
 		{
 			MethodName: "GetOrder",

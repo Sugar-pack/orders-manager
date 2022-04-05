@@ -1,11 +1,12 @@
 syntax = "proto3";
 package pb;
 option go_package = "github.com/Sugar-pack/orders-manager/internal/pb";
+import "google/protobuf/timestamp.proto";
 
 service OrdersManagerService {
-  rpc ReceiveOrder(Order) returns (OrderTnxResponse) {}
+  rpc InsertOrder(Order) returns (OrderTnxResponse) {}
 
-  rpc ReceiveConfirmation(Confirmation) returns (ConfirmationResponse) {}
+  rpc SendConfirmation(Confirmation) returns (ConfirmationResponse) {}
 
   rpc GetOrder(GetOrderRequest) returns (OrderResponse) {}
 }
@@ -13,7 +14,7 @@ service OrdersManagerService {
 message Order {
   string user_id = 1;
   string label = 2;
-  string created_at = 3;
+  google.protobuf.Timestamp created_at = 3;
 }
 
 message OrderTnxResponse {
@@ -38,7 +39,7 @@ message OrderResponse {
   string id  = 1;
   string user_id = 2;
   string label = 3;
-  string created_at = 4;
+  google.protobuf.Timestamp created_at = 4;
 }
 
 
