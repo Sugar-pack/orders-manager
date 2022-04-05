@@ -9,15 +9,15 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 
-	pb2 "github.com/Sugar-pack/orders-manager/pkg/pb"
+	"github.com/Sugar-pack/orders-manager/pkg/pb"
 )
 
 type OrderService struct {
-	pb2.OrdersManagerServiceServer
+	pb.OrdersManagerServiceServer
 	dbConn *sqlx.DB
 }
 
-func (s OrderService) InsertOrder(ctx context.Context, order *pb2.Order) (*pb2.OrderTnxResponse, error) {
+func (s OrderService) InsertOrder(ctx context.Context, order *pb.Order) (*pb.OrderTnxResponse, error) {
 	logger := logging.FromContext(ctx)
 	logger.Info("ReceiveOrder")
 	orderID := uuid.New()
@@ -57,7 +57,7 @@ func (s OrderService) InsertOrder(ctx context.Context, order *pb2.Order) (*pb2.O
 		return nil, fmt.Errorf("commit tx failed %w", err)
 	}
 
-	return &pb2.OrderTnxResponse{
+	return &pb.OrderTnxResponse{
 		Id:  orderID.String(),
 		Tnx: txID.String(),
 	}, nil
