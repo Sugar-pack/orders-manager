@@ -327,7 +327,7 @@ linters-settings:
   goimports:
     # put imports beginning with prefix after 3rd-party packages;
     # it's a comma-separated list of prefixes
-    local-prefixes: github.com/epam/edp-sonar-operator/v2
+    local-prefixes: github.com/Sugar-pack/orders-manager
 
   golint:
     # minimal confidence for issues, default is 0.8
