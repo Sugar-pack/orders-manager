@@ -1,0 +1,21 @@
+version: "3.9"
+services:
+  order-service:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - "orders_db"
+    networks:
+      - default
+  orders_db:
+    image: "postgres:14.2"
+    ports:
+      - "15432:5432"
+    networks:
+      - default
+    hostname: orders_db
+    environment:
+      POSTGRES_USER: user_db
+      POSTGRES_DB: orders_db
+      POSTGRES_HOST_AUTH_METHOD: trust
