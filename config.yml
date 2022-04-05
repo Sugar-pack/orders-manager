@@ -1,0 +1,10 @@
+---
+api:
+  bind: :8080
+db:
+
+  conn_string: "host=orders_db port=5432 user=user_db dbname=orders sslmode=disable" # use it for the local development only
+  max_open_conns: 100
+  conn_max_lifetime: 60s
+  migration_dir_path: "./sql-migrations"
+  migration_table: "migrations"
