@@ -1,10 +1,11 @@
 package grpcapi
 
 import (
-	"github.com/Sugar-pack/orders-manager/pkg/pb"
 	"github.com/Sugar-pack/users-manager/pkg/logging"
 	"github.com/jmoiron/sqlx"
 	"google.golang.org/grpc"
+
+	"github.com/Sugar-pack/orders-manager/pkg/pb"
 )
 
 func CreateServer(logger logging.Logger, dbConn *sqlx.DB) (*grpc.Server, error) {

@@ -5,11 +5,12 @@ import (
 	"log"
 	"net"
 
+	"github.com/Sugar-pack/users-manager/pkg/logging"
+
 	"github.com/Sugar-pack/orders-manager/internal/config"
 	"github.com/Sugar-pack/orders-manager/internal/db"
 	"github.com/Sugar-pack/orders-manager/internal/grpcapi"
 	"github.com/Sugar-pack/orders-manager/internal/migration"
-	"github.com/Sugar-pack/users-manager/pkg/logging"
 )
 
 func main() {
