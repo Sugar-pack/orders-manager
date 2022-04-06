@@ -27,14 +27,14 @@ func (s *TnxConfirmingService) SendConfirmation(ctx context.Context,
 	if confirmation.Commit {
 		errCommit := db.CommitTransaction(ctx, s.dbConn, TnxID)
 		if errCommit != nil {
-			logger.Error("commit tx failed ", errCommit)
+			logger.WithError(errCommit).Error("commit tx failed")
 
 			return nil, status.Error(codes.Internal, "commit tx failed") //nolint:wrapcheck // should be wrapped as is
 		}
 	} else {
 		errRollback := db.RollBackTransaction(ctx, s.dbConn, TnxID)
 		if errRollback != nil {
-			logger.Error("rollback tx failed ", errRollback)
+			logger.WithError(errRollback).Error("rollback tx failed")
 
 			return nil, status.Error(codes.Internal, "rollback tx failed") //nolint:wrapcheck // should be wrapped as is
 		}
