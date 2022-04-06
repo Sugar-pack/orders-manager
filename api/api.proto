@@ -5,10 +5,11 @@ import "google/protobuf/timestamp.proto";
 
 service OrdersManagerService {
   rpc InsertOrder(Order) returns (OrderTnxResponse) {}
-
-  rpc SendConfirmation(Confirmation) returns (ConfirmationResponse) {}
-
   rpc GetOrder(GetOrderRequest) returns (OrderResponse) {}
+}
+
+service TnxConfirmingService {
+  rpc SendConfirmation(Confirmation) returns (ConfirmationResponse) {}
 }
 
 message Order {
@@ -23,12 +24,11 @@ message OrderTnxResponse {
 }
 
 message Confirmation {
-  string id = 1;
-  string tnx = 2;
+  string tnx = 1;
+  bool commit = 2;
 }
 
 message ConfirmationResponse {
- bool success = 1;
 }
 
 message GetOrderRequest {

@@ -23,7 +23,6 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OrdersManagerServiceClient interface {
 	InsertOrder(ctx context.Context, in *Order, opts ...grpc.CallOption) (*OrderTnxResponse, error)
-	SendConfirmation(ctx context.Context, in *Confirmation, opts ...grpc.CallOption) (*ConfirmationResponse, error)
 	GetOrder(ctx context.Context, in *GetOrderRequest, opts ...grpc.CallOption) (*OrderResponse, error)
 }
 
@@ -44,15 +43,6 @@ func (c *ordersManagerServiceClient) InsertOrder(ctx context.Context, in *Order,
 	return out, nil
 }
 
-func (c *ordersManagerServiceClient) SendConfirmation(ctx context.Context, in *Confirmation, opts ...grpc.CallOption) (*ConfirmationResponse, error) {
-	out := new(ConfirmationResponse)
-	err := c.cc.Invoke(ctx, "/pb.OrdersManagerService/SendConfirmation", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *ordersManagerServiceClient) GetOrder(ctx context.Context, in *GetOrderRequest, opts ...grpc.CallOption) (*OrderResponse, error) {
 	out := new(OrderResponse)
 	err := c.cc.Invoke(ctx, "/pb.OrdersManagerService/GetOrder", in, out, opts...)
@@ -67,7 +57,6 @@ func (c *ordersManagerServiceClient) GetOrder(ctx context.Context, in *GetOrderR
 // for forward compatibility
 type OrdersManagerServiceServer interface {
 	InsertOrder(context.Context, *Order) (*OrderTnxResponse, error)
-	SendConfirmation(context.Context, *Confirmation) (*ConfirmationResponse, error)
 	GetOrder(context.Context, *GetOrderRequest) (*OrderResponse, error)
 	mustEmbedUnimplementedOrdersManagerServiceServer()
 }
@@ -78,9 +67,6 @@ type UnimplementedOrdersManagerServiceServer struct {
 
 func (UnimplementedOrdersManagerServiceServer) InsertOrder(context.Context, *Order) (*OrderTnxResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method InsertOrder not implemented")
-}
-func (UnimplementedOrdersManagerServiceServer) SendConfirmation(context.Context, *Confirmation) (*ConfirmationResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SendConfirmation not implemented")
 }
 func (UnimplementedOrdersManagerServiceServer) GetOrder(context.Context, *GetOrderRequest) (*OrderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOrder not implemented")
@@ -116,24 +102,6 @@ func _OrdersManagerService_InsertOrder_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OrdersManagerService_SendConfirmation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Confirmation)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(OrdersManagerServiceServer).SendConfirmation(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pb.OrdersManagerService/SendConfirmation",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrdersManagerServiceServer).SendConfirmation(ctx, req.(*Confirmation))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _OrdersManagerService_GetOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetOrderRequest)
 	if err := dec(in); err != nil {
@@ -164,12 +132,94 @@ var OrdersManagerService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _OrdersManagerService_InsertOrder_Handler,
 		},
 		{
-			MethodName: "SendConfirmation",
-			Handler:    _OrdersManagerService_SendConfirmation_Handler,
-		},
-		{
 			MethodName: "GetOrder",
 			Handler:    _OrdersManagerService_GetOrder_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "api/api.proto",
+}
+
+// TnxConfirmingServiceClient is the client API for TnxConfirmingService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type TnxConfirmingServiceClient interface {
+	SendConfirmation(ctx context.Context, in *Confirmation, opts ...grpc.CallOption) (*ConfirmationResponse, error)
+}
+
+type tnxConfirmingServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewTnxConfirmingServiceClient(cc grpc.ClientConnInterface) TnxConfirmingServiceClient {
+	return &tnxConfirmingServiceClient{cc}
+}
+
+func (c *tnxConfirmingServiceClient) SendConfirmation(ctx context.Context, in *Confirmation, opts ...grpc.CallOption) (*ConfirmationResponse, error) {
+	out := new(ConfirmationResponse)
+	err := c.cc.Invoke(ctx, "/pb.TnxConfirmingService/SendConfirmation", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// TnxConfirmingServiceServer is the server API for TnxConfirmingService service.
+// All implementations must embed UnimplementedTnxConfirmingServiceServer
+// for forward compatibility
+type TnxConfirmingServiceServer interface {
+	SendConfirmation(context.Context, *Confirmation) (*ConfirmationResponse, error)
+	mustEmbedUnimplementedTnxConfirmingServiceServer()
+}
+
+// UnimplementedTnxConfirmingServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedTnxConfirmingServiceServer struct {
+}
+
+func (UnimplementedTnxConfirmingServiceServer) SendConfirmation(context.Context, *Confirmation) (*ConfirmationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendConfirmation not implemented")
+}
+func (UnimplementedTnxConfirmingServiceServer) mustEmbedUnimplementedTnxConfirmingServiceServer() {}
+
+// UnsafeTnxConfirmingServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to TnxConfirmingServiceServer will
+// result in compilation errors.
+type UnsafeTnxConfirmingServiceServer interface {
+	mustEmbedUnimplementedTnxConfirmingServiceServer()
+}
+
+func RegisterTnxConfirmingServiceServer(s grpc.ServiceRegistrar, srv TnxConfirmingServiceServer) {
+	s.RegisterService(&TnxConfirmingService_ServiceDesc, srv)
+}
+
+func _TnxConfirmingService_SendConfirmation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Confirmation)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TnxConfirmingServiceServer).SendConfirmation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.TnxConfirmingService/SendConfirmation",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TnxConfirmingServiceServer).SendConfirmation(ctx, req.(*Confirmation))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// TnxConfirmingService_ServiceDesc is the grpc.ServiceDesc for TnxConfirmingService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var TnxConfirmingService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "pb.TnxConfirmingService",
+	HandlerType: (*TnxConfirmingServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "SendConfirmation",
+			Handler:    _TnxConfirmingService_SendConfirmation_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
