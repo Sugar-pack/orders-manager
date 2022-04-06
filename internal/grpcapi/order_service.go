@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
 	"github.com/Sugar-pack/users-manager/pkg/logging"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/Sugar-pack/orders-manager/internal/db"
 	"github.com/Sugar-pack/orders-manager/pkg/pb"
@@ -20,7 +19,7 @@ type OrderService struct {
 	dbConn *sqlx.DB
 }
 
-func (s OrderService) InsertOrder(ctx context.Context, order *pb.Order) (*pb.OrderTnxResponse, error) {
+func (s *OrderService) InsertOrder(ctx context.Context, order *pb.Order) (*pb.OrderTnxResponse, error) {
 	logger := logging.FromContext(ctx)
 	logger.Info("ReceiveOrder")
 	orderID := uuid.New()
@@ -58,7 +57,7 @@ func (s OrderService) InsertOrder(ctx context.Context, order *pb.Order) (*pb.Ord
 
 		return nil, status.Error(codes.Internal, "init tx failed") //nolint:wrapcheck // should be wrapped as is
 	}
-	err = db.PrepareTransaction(ctx, transaction, txID)
+	err = db.PrepareTransaction(ctx, transaction, txID.String())
 	if err != nil {
 		logger.Error("prepare tx failed ", err)
 

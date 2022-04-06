@@ -22,5 +22,10 @@ func CreateServer(logger logging.Logger, dbConn *sqlx.DB) (*grpc.Server, error) 
 	}
 	pb.RegisterOrdersManagerServiceServer(grpcServer, orderService)
 
+	transactionService := &TnxConfirmingService{
+		dbConn: dbConn,
+	}
+	pb.RegisterTnxConfirmingServiceServer(grpcServer, transactionService)
+
 	return grpcServer, nil
 }
