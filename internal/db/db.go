@@ -6,8 +6,9 @@ import (
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/jmoiron/sqlx"
 
-	"github.com/Sugar-pack/orders-manager/internal/config"
 	"github.com/Sugar-pack/users-manager/pkg/logging"
+
+	"github.com/Sugar-pack/orders-manager/internal/config"
 )
 
 // Connect creates new db connection.

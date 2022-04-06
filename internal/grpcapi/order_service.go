@@ -2,32 +2,76 @@ package grpcapi
 
 import (
 	"context"
+	"fmt"
 
-	pb2 "github.com/Sugar-pack/orders-manager/pkg/pb"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/Sugar-pack/users-manager/pkg/logging"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+
+	"github.com/Sugar-pack/orders-manager/internal/db"
+	"github.com/Sugar-pack/orders-manager/pkg/pb"
 )
 
 type OrderService struct {
-	pb2.OrdersManagerServiceServer
+	pb.OrdersManagerServiceServer
 	dbConn *sqlx.DB
 }
 
-func (s OrderService) InsertOrder(cxt context.Context, order *pb2.Order) (*pb2.OrderTnxResponse, error) {
-	logger := logging.FromContext(cxt)
+func (s OrderService) InsertOrder(ctx context.Context, order *pb.Order) (*pb.OrderTnxResponse, error) {
+	logger := logging.FromContext(ctx)
 	logger.Info("ReceiveOrder")
 	orderID := uuid.New()
 	txID := uuid.New()
-	query := "INSERT INTO orders ( id,  user_id, label, created_at ) VALUES ($1, $2, $3, $4)"
-	_, err := s.dbConn.Exec(query, orderID.String(), order.UserId, order.Label, order.CreatedAt.AsTime())
+	parseUserID, err := uuid.Parse(order.UserId)
 	if err != nil {
-		logger.Error("Failed to insert order ", err)
+		logger.Error("Error parsing user id ", err)
 
-		return nil, err
+		return nil, status.Error(codes.Internal, "error parsing user id") //nolint:wrapcheck // should be wrapped as is
 	}
 
-	return &pb2.OrderTnxResponse{
+	dbOrder := &db.Order{
+		ID:        orderID,
+		UserID:    parseUserID,
+		Label:     order.Label,
+		CreatedAt: order.CreatedAt.AsTime(),
+	}
+
+	transaction, err := s.dbConn.BeginTxx(ctx, nil)
+	if err != nil {
+		logger.Error(err)
+
+		return nil, fmt.Errorf("prepare tx failed %w", err)
+	}
+	defer func(tx *sqlx.Tx) {
+		errRollback := tx.Rollback()
+		if errRollback != nil {
+			logger.Error(errRollback)
+		}
+	}(transaction)
+
+	err = db.InsertUser(ctx, transaction, dbOrder)
+	if err != nil {
+		logger.Error("init transaction failed ", err)
+
+		return nil, status.Error(codes.Internal, "init tx failed") //nolint:wrapcheck // should be wrapped as is
+	}
+	err = db.PrepareTransaction(ctx, transaction, txID)
+	if err != nil {
+		logger.Error("prepare tx failed ", err)
+
+		return nil, status.Error(codes.Internal, "prepare tx failed") //nolint:wrapcheck // should be wrapped as is
+	}
+	err = transaction.Commit()
+	if err != nil {
+		logger.Error("commit tx failed ", err)
+
+		return nil, status.Error(codes.Internal, "commit tx failed") //nolint:wrapcheck // should be wrapped as is
+	}
+
+	return &pb.OrderTnxResponse{
 		Id:  orderID.String(),
 		Tnx: txID.String(),
 	}, nil
