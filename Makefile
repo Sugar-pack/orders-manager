@@ -1,5 +1,5 @@
 .PHONY: docker-run
-docker-run: vet lint
+docker-run: vet lint test
 	@docker-compose up --build -d --remove-orphans
 
 .PHONY: docker-restart
@@ -11,3 +11,6 @@ vet:  ## Run go vet
 
 lint: ## Run go lint
 	golangci-lint run
+
+test: ## Run tests
+	go test ./...

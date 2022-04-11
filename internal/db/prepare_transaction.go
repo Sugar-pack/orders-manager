@@ -17,13 +17,14 @@ type Order struct {
 	CreatedAt time.Time `db:"created_at"`
 }
 
+const InsertOrderQuery = "INSERT INTO orders ( id,  user_id, label, created_at ) VALUES (:id, :user_id, :label, :created_at)" // nolint: lll // sql statement
+
 type NamedExecutorContext interface {
 	NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error)
 }
 
 func InsertUser(ctx context.Context, dbConn NamedExecutorContext, order *Order) error {
-	query := "INSERT INTO orders ( id,  user_id, label, created_at ) VALUES (:id, :user_id, :label, :created_at)"
-	_, err := dbConn.NamedExecContext(ctx, query, order)
+	_, err := dbConn.NamedExecContext(ctx, InsertOrderQuery, order)
 
 	return err //nolint:wrapcheck // should be wrapped in service layer
 }

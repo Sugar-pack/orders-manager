@@ -2,6 +2,8 @@ package grpcapi
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/Sugar-pack/users-manager/pkg/logging"
@@ -47,7 +49,9 @@ func (s *OrderService) InsertOrder(ctx context.Context, order *pb.Order) (*pb.Or
 	defer func(tx *sqlx.Tx) {
 		errRollback := tx.Rollback()
 		if errRollback != nil {
-			logger.WithError(errRollback).Error("rollback tx failed")
+			if !errors.Is(errRollback, sql.ErrTxDone) {
+				logger.WithError(err).Error("rollback tx failed")
+			}
 		}
 	}(transaction)
 
