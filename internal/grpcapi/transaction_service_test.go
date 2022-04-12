@@ -25,20 +25,19 @@ import (
 	"github.com/Sugar-pack/orders-manager/pkg/pb"
 )
 
-//e2e test
-func TestTnxConfirmingService_SendConfirmation_True(t *testing.T) {
-	logger := logging.GetLogger()
-	ctx := logging.WithContext(context.Background(), logger)
+const (
+	dbUser = "user_db"
+	dbName = "orders_db"
+)
 
+func PSQLResource(t *testing.T) (*dockertest.Pool, *dockertest.Resource) {
+	t.Helper()
 	// Prepare test environment. Look for end-section below
 	pool, err := dockertest.NewPool("")
 	if err != nil {
 		t.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	dbUser := "user_db"
-	dbName := "orders_db"
-	sslMode := "disable"
 	// pulls an image, creates a container based on it and runs it
 	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
 		Repository: "postgres",
@@ -62,11 +61,13 @@ func TestTnxConfirmingService_SendConfirmation_True(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Could not start resource: %s", err)
 	}
-	defer func() {
-		if purgeErr := pool.Purge(resource); purgeErr != nil {
-			t.Fatalf("Could not purge resource: %s", purgeErr)
-		}
-	}()
+	return pool, resource
+}
+
+func DBConnection(ctx context.Context, t *testing.T, pool *dockertest.Pool, resource *dockertest.Resource) *sqlx.DB {
+	t.Helper()
+
+	sslMode := "disable"
 
 	hostAndPort := resource.GetHostPort("5432/tcp")
 	dbHost, dbPort, err := net.SplitHostPort(hostAndPort)
@@ -92,24 +93,23 @@ func TestTnxConfirmingService_SendConfirmation_True(t *testing.T) {
 	}); err != nil {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
-	defer func() {
-		if disconnectErr := db.Disconnect(ctx, dbConn); disconnectErr != nil {
-			log.Fatalf("disconnect failed: '%s'", err)
-		}
-	}()
 
 	err = migration.Apply(ctx, dbConf)
 	if err != nil {
 		log.Fatalf("apply migrations failed: '%s'", err)
 	}
-	// Test environment prepared
+	return dbConn
+}
 
+func GRPCConnection(ctx context.Context, t *testing.T, dbConn *sqlx.DB, address string) *grpc.ClientConn {
+	t.Helper()
+
+	logger := logging.FromContext(ctx)
 	grpcServer, err := CreateServer(logger, dbConn)
 	if err != nil {
 		t.Fatalf("create grpc server failed: '%s'", err)
 	}
 
-	address := "localhost:8081"
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
 		t.Fatalf("listen failed: '%s'", err)
@@ -124,6 +124,32 @@ func TestTnxConfirmingService_SendConfirmation_True(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dial failed: '%s'", err)
 	}
+	return grpcConn
+}
+
+//e2e test
+func TestTnxConfirmingService_SendConfirmation_True(t *testing.T) {
+	logger := logging.GetLogger()
+	ctx := logging.WithContext(context.Background(), logger)
+
+	pool, resource := PSQLResource(t)
+	defer func() {
+		if purgeErr := pool.Purge(resource); purgeErr != nil {
+			t.Fatalf("Could not purge resource: %s", purgeErr)
+		}
+	}()
+
+	dbConn := DBConnection(ctx, t, pool, resource)
+
+	defer func() {
+		if disconnectErr := db.Disconnect(ctx, dbConn); disconnectErr != nil {
+			log.Fatalf("disconnect failed: '%s'", disconnectErr)
+		}
+	}()
+
+	// address for each test should be different
+	address := "localhost:8081"
+	grpcConn := GRPCConnection(ctx, t, dbConn, address)
 
 	testTx, err := dbConn.BeginTxx(ctx, nil)
 	if err != nil {
@@ -145,7 +171,7 @@ func TestTnxConfirmingService_SendConfirmation_True(t *testing.T) {
 		CreatedAt: time.Time{},
 	}
 	txID := uuid.New().String()
-	_, err = testTx.NamedExecContext(ctx, db.InsertOrderQuery, order)
+	err = db.InsertUser(ctx, testTx, order)
 	if err != nil {
 		t.Fatalf("insert order failed: '%s'", err)
 	}
@@ -175,4 +201,79 @@ func TestTnxConfirmingService_SendConfirmation_True(t *testing.T) {
 	assert.Equal(t, order.Label, label, "order label should be equal")
 	assert.Equal(t, order.UserID.String(), userID, "order user id should be equal")
 	assert.Equal(t, order.CreatedAt.Format(time.RFC3339), createdAt, "order created at should be equal")
+}
+
+//e2e test
+func TestTnxConfirmingService_SendConfirmation_False(t *testing.T) {
+	logger := logging.GetLogger()
+	ctx := logging.WithContext(context.Background(), logger)
+
+	pool, resource := PSQLResource(t)
+	defer func() {
+		if purgeErr := pool.Purge(resource); purgeErr != nil {
+			t.Fatalf("Could not purge resource: %s", purgeErr)
+		}
+	}()
+
+	dbConn := DBConnection(ctx, t, pool, resource)
+
+	defer func() {
+		if disconnectErr := db.Disconnect(ctx, dbConn); disconnectErr != nil {
+			log.Fatalf("disconnect failed: '%s'", disconnectErr)
+		}
+	}()
+
+	// address for each test should be different
+	address := "localhost:8082"
+	grpcConn := GRPCConnection(ctx, t, dbConn, address)
+
+	testTx, err := dbConn.BeginTxx(ctx, nil)
+	if err != nil {
+		t.Fatalf("begin transaction failed: '%s'", err)
+	}
+	defer func(testTx *sqlx.Tx) {
+		errRollback := testTx.Rollback()
+		if errRollback != nil {
+			if !errors.Is(errRollback, sql.ErrTxDone) {
+				t.Fatalf("rollback failed: '%s'", errRollback)
+			}
+		}
+	}(testTx)
+
+	order := &db.Order{
+		ID:        uuid.New(),
+		UserID:    uuid.New(),
+		Label:     "e2e test",
+		CreatedAt: time.Time{},
+	}
+	txID := uuid.New().String()
+	err = db.InsertUser(ctx, testTx, order)
+	if err != nil {
+		t.Fatalf("insert order failed: '%s'", err)
+	}
+	_, err = testTx.ExecContext(ctx, fmt.Sprintf("PREPARE TRANSACTION '%s'", txID))
+	if err != nil {
+		t.Fatalf("prepare transaction failed: '%s'", err)
+	}
+
+	// preparation done
+
+	transactionClient := pb.NewTnxConfirmingServiceClient(grpcConn)
+	confirmation := &pb.Confirmation{
+		Tnx:    txID,
+		Commit: false,
+	}
+	confirmationResponse, err := transactionClient.SendConfirmation(ctx, confirmation)
+	assert.NoError(t, err)
+	assert.NotNil(t, confirmationResponse, "confirmationResponse should be empty")
+
+	var orderID, label, userID, createdAt string
+
+	err = dbConn.QueryRowContext(ctx, fmt.Sprintf("SELECT id, label, user_id, created_at FROM orders WHERE id = '%s'", order.ID)).Scan(&orderID, &label, &userID, &createdAt)
+	assert.ErrorIs(t, err, sql.ErrNoRows, "order should not exist")
+
+	var dbTxId string
+	err = dbConn.QueryRowxContext(ctx, `SELECT gid FROM pg_prepared_xacts WHERE gid = $1`, txID).Scan(&dbTxId)
+	assert.ErrorIs(t, err, sql.ErrNoRows, "order should not exist")
+
 }

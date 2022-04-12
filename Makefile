@@ -2,8 +2,8 @@
 docker-run: vet lint test
 	@docker-compose up --build -d --remove-orphans
 
-.PHONY: docker-restart
-docker-restart:
+.PHONY: docker-up
+docker-up:
 	@docker-compose up -d
 
 vet:  ## Run go vet
