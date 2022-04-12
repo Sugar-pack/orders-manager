@@ -179,6 +179,10 @@ func TestTnxConfirmingService_SendConfirmation_True(t *testing.T) {
 	if err != nil {
 		t.Fatalf("prepare transaction failed: '%s'", err)
 	}
+	err = testTx.Commit()
+	if err != nil {
+		t.Fatalf("commit failed: '%s'", err)
+	}
 
 	// preparation done
 
@@ -254,6 +258,10 @@ func TestTnxConfirmingService_SendConfirmation_False(t *testing.T) {
 	_, err = testTx.ExecContext(ctx, fmt.Sprintf("PREPARE TRANSACTION '%s'", txID))
 	if err != nil {
 		t.Fatalf("prepare transaction failed: '%s'", err)
+	}
+	err = testTx.Commit()
+	if err != nil {
+		t.Fatalf("commit failed: '%s'", err)
 	}
 
 	// preparation done
