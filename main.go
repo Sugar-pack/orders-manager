@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log"
-	"net"
 
 	"github.com/Sugar-pack/users-manager/pkg/logging"
 
@@ -25,7 +24,6 @@ func main() {
 	logger := logging.GetLogger()
 	ctx = logging.WithContext(ctx, logger)
 	err = migration.Apply(ctx, appConfig.Db)
-
 	if err != nil {
 		log.Fatal(err)
 
@@ -46,15 +44,9 @@ func main() {
 		return
 	}
 
-	lis, err := net.Listen("tcp", appConfig.API.Bind)
+	err = grpcapi.ServeWithTrace(ctx, server, appConfig.API)
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-
-		return
-	}
-
-	if serveErr := server.Serve(lis); serveErr != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.Fatal(err)
 
 		return
 	}

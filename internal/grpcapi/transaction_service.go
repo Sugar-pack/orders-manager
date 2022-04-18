@@ -3,6 +3,10 @@ package grpcapi
 import (
 	"context"
 
+	"go.opentelemetry.io/otel"
+
+	"github.com/Sugar-pack/orders-manager/internal/tracing"
+
 	"github.com/Sugar-pack/users-manager/pkg/logging"
 	"github.com/jmoiron/sqlx"
 	"google.golang.org/grpc/codes"
@@ -20,6 +24,9 @@ type TnxConfirmingService struct {
 func (s *TnxConfirmingService) SendConfirmation(ctx context.Context,
 	confirmation *pb.Confirmation,
 ) (*pb.ConfirmationResponse, error) {
+	ctx, span := otel.Tracer(tracing.TracerName).Start(ctx, "SendConfirmation")
+	defer span.End()
+
 	logger := logging.FromContext(ctx)
 	logger.Info("Confirmation request received")
 	TnxID := confirmation.Tnx
