@@ -2,6 +2,8 @@ package grpcapi
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/Sugar-pack/users-manager/pkg/logging"
@@ -44,10 +46,15 @@ func (s *OrderService) InsertOrder(ctx context.Context, order *pb.Order) (*pb.Or
 
 		return nil, fmt.Errorf("prepare tx failed %w", err)
 	}
+
 	defer func(tx *sqlx.Tx) {
+		// prepared transaction is independent of commit or rollback
+		// here we just release tx
 		errRollback := tx.Rollback()
 		if errRollback != nil {
-			logger.WithError(errRollback).Error("rollback tx failed")
+			if !errors.Is(errRollback, sql.ErrTxDone) {
+				logger.WithError(err).Error("rollback tx failed")
+			}
 		}
 	}(transaction)
 
@@ -63,12 +70,13 @@ func (s *OrderService) InsertOrder(ctx context.Context, order *pb.Order) (*pb.Or
 
 		return nil, status.Error(codes.Internal, "prepare tx failed") //nolint:wrapcheck // should be wrapped as is
 	}
-	err = transaction.Commit()
-	if err != nil {
-		logger.WithError(err).Error("commit tx failed")
 
-		return nil, status.Error(codes.Internal, "commit tx failed") //nolint:wrapcheck // should be wrapped as is
-	}
+	defer func(ctx context.Context, dbConn sqlx.ExecerContext, txID string) {
+		errRollBack := db.RollBackTransaction(ctx, dbConn, txID)
+		if errRollBack != nil {
+			logger.WithError(errRollBack).Error("rollback prepared tx failed")
+		}
+	}(ctx, transaction, txID.String())
 
 	return &pb.OrderTnxResponse{
 		Id:  orderID.String(),
