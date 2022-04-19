@@ -9,10 +9,12 @@ import (
 	"github.com/Sugar-pack/users-manager/pkg/logging"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/Sugar-pack/orders-manager/internal/db"
+	"github.com/Sugar-pack/orders-manager/internal/tracing"
 	"github.com/Sugar-pack/orders-manager/pkg/pb"
 )
 
@@ -22,6 +24,8 @@ type OrderService struct {
 }
 
 func (s *OrderService) InsertOrder(ctx context.Context, order *pb.Order) (*pb.OrderTnxResponse, error) {
+	ctx, span := otel.Tracer(tracing.TracerName).Start(ctx, "InsertOrder")
+	defer span.End()
 	logger := logging.FromContext(ctx)
 	logger.Info("ReceiveOrder")
 	orderID := uuid.New()
@@ -48,8 +52,7 @@ func (s *OrderService) InsertOrder(ctx context.Context, order *pb.Order) (*pb.Or
 	}
 
 	defer func(tx *sqlx.Tx) {
-		// prepared transaction is independent of commit or rollback
-		// here we just release tx
+		// prepared transaction is independent of commit or rollback. here we just release tx
 		errRollback := tx.Rollback()
 		if errRollback != nil {
 			if !errors.Is(errRollback, sql.ErrTxDone) {
@@ -67,16 +70,15 @@ func (s *OrderService) InsertOrder(ctx context.Context, order *pb.Order) (*pb.Or
 	err = db.PrepareTransaction(ctx, transaction, txID.String())
 	if err != nil {
 		logger.WithError(err).Error("prepare tx failed")
+		defer func(ctx context.Context, dbConn sqlx.ExecerContext, txID string) {
+			errRollBack := db.RollBackTransaction(ctx, dbConn, txID)
+			if errRollBack != nil {
+				logger.WithError(errRollBack).Error("rollback prepared tx failed")
+			}
+		}(ctx, transaction, txID.String())
 
 		return nil, status.Error(codes.Internal, "prepare tx failed") //nolint:wrapcheck // should be wrapped as is
 	}
-
-	defer func(ctx context.Context, dbConn sqlx.ExecerContext, txID string) {
-		errRollBack := db.RollBackTransaction(ctx, dbConn, txID)
-		if errRollBack != nil {
-			logger.WithError(errRollBack).Error("rollback prepared tx failed")
-		}
-	}(ctx, transaction, txID.String())
 
 	return &pb.OrderTnxResponse{
 		Id:  orderID.String(),
