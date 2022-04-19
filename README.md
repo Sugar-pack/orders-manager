@@ -1,5 +1,8 @@
 # pet-two-phase-commit
 
+[![build](https://github.com/Sugar-pack/orders-manager/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/Sugar-pack/orders-manager/actions/workflows/build.yml)
+[![CodeQL](https://github.com/Sugar-pack/orders-manager/actions/workflows/codeql.yml/badge.svg)](https://github.com/Sugar-pack/orders-manager/actions/workflows/codeql.yml)
+
 ## Development
 
 ```bash

@@ -16,5 +16,5 @@ vet:  ## Run go vet
 lint: ## Run go lint
 	golangci-lint run
 
-test: ## Run tests
-	go test ./...
+test-coverage: ## Run go test with coverage
+	go test ./... -coverprofile=coverage.out `go list ./...`
