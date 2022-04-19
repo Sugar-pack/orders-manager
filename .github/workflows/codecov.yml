@@ -1,0 +1,28 @@
+name: codecov
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  GOLANG_VERSION: '1.18'
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GOLANG_VERSION }}
+
+      - name: Test
+        run: make test-coverage
+
+      - name: Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          file: coverage.out

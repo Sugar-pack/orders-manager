@@ -18,3 +18,6 @@ lint: ## Run go lint
 
 test: ## Run tests
 	go test ./...
+
+test-coverage: ## Run go test with coverage
+	go test ./... -coverprofile=coverage.out `go list ./...`
