@@ -22,12 +22,12 @@ jobs:
           go-version: ${{ env.GOLANG_VERSION }}
 
       - name: test
-          run: make test
+        run: make test
 
       - name: Build
         run: make docker-build
 
       - name: golangci-lint
-          uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v3
 
 
