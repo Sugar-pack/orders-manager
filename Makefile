@@ -6,6 +6,10 @@ docker-run: vet lint test
 docker-up:
 	@docker-compose up -d
 
+.PHONY: docker-build
+docker-build:
+	@docker-compose build
+
 vet:  ## Run go vet
 	go vet ./...
 
