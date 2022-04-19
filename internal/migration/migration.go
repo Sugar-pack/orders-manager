@@ -4,13 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Sugar-pack/orders-manager/internal/db"
-
+	"github.com/Sugar-pack/users-manager/pkg/logging"
 	migrate "github.com/rubenv/sql-migrate"
 
-	"github.com/Sugar-pack/users-manager/pkg/logging"
-
 	"github.com/Sugar-pack/orders-manager/internal/config"
+	"github.com/Sugar-pack/orders-manager/internal/db"
 )
 
 // Apply applies database migrations.

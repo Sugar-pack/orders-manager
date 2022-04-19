@@ -3,16 +3,14 @@ package grpcapi
 import (
 	"context"
 
-	"go.opentelemetry.io/otel"
-
-	"github.com/Sugar-pack/orders-manager/internal/tracing"
-
 	"github.com/Sugar-pack/users-manager/pkg/logging"
 	"github.com/jmoiron/sqlx"
+	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/Sugar-pack/orders-manager/internal/db"
+	"github.com/Sugar-pack/orders-manager/internal/tracing"
 	"github.com/Sugar-pack/orders-manager/pkg/pb"
 )
 

@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Sugar-pack/users-manager/pkg/logging"
 	_ "github.com/jackc/pgx/v4/stdlib"
@@ -24,12 +25,12 @@ func Connect(ctx context.Context, conf *config.DB) (*sqlx.DB, error) {
 	if err != nil {
 		logger.WithError(err).Error("unable to connect to database")
 
-		return nil, err //nolint:wrapcheck // false positive
+		return nil, fmt.Errorf("unable to connect to database %w", err)
 	}
 	conn.DB.SetMaxOpenConns(conf.MaxOpenCons)
 	conn.DB.SetConnMaxLifetime(conf.ConnMaxLifetime)
 
-	return conn, err //nolint:wrapcheck // false positive
+	return conn, nil
 }
 
 // Disconnect drops db connection.

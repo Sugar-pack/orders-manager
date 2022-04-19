@@ -12,7 +12,7 @@ import (
 const TracerName = "order-manager"
 
 func newExporter() (trace.SpanExporter, error) {
-	return jaeger.New( //nolint:wrapcheck // false positive
+	return jaeger.New( //nolint:wrapcheck // too simple to wrap
 		jaeger.WithCollectorEndpoint(),
 	)
 }
@@ -23,7 +23,7 @@ func newResource() (*resource.Resource, error) {
 		resource.Environment(),
 	)
 
-	return tracingResource, err //nolint:wrapcheck // false positive
+	return tracingResource, err //nolint:wrapcheck // err can be nil
 }
 
 func InitJaegerTracing(logger logging.Logger) (*trace.TracerProvider, error) {

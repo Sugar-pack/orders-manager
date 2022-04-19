@@ -11,7 +11,6 @@ import (
 
 	"github.com/Sugar-pack/orders-manager/internal/config"
 	"github.com/Sugar-pack/orders-manager/internal/tracing"
-
 	"github.com/Sugar-pack/orders-manager/pkg/pb"
 )
 
