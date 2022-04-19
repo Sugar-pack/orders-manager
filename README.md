@@ -2,6 +2,7 @@
 
 [![build](https://github.com/Sugar-pack/orders-manager/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/Sugar-pack/orders-manager/actions/workflows/build.yml)
 [![CodeQL](https://github.com/Sugar-pack/orders-manager/actions/workflows/codeql.yml/badge.svg)](https://github.com/Sugar-pack/orders-manager/actions/workflows/codeql.yml)
+[![codecov](https://codecov.io/gh/Sugar-pack/orders-manager/branch/main/graph/badge.svg?token=VEXDJ58WWI)](https://codecov.io/gh/Sugar-pack/orders-manager)
 
 ## Development
 
