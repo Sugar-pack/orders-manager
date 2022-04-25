@@ -63,7 +63,7 @@ func (s *OrderService) InsertOrder(ctx context.Context, order *pb.Order) (*pb.Or
 		}
 	}(transaction)
 
-	err = db.InsertUser(ctx, transaction, dbOrder)
+	err = db.InsertOrder(ctx, transaction, dbOrder)
 	if err != nil {
 		logger.WithError(err).Error("init transaction failed")
 
