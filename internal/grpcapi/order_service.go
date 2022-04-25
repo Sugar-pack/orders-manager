@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/Sugar-pack/orders-manager/internal/db"
 	"github.com/Sugar-pack/orders-manager/internal/tracing"
@@ -21,6 +22,27 @@ import (
 type OrderService struct {
 	pb.OrdersManagerServiceServer
 	dbConn *sqlx.DB
+}
+
+func (s *OrderService) GetOrder(ctx context.Context, request *pb.GetOrderRequest) (*pb.OrderResponse, error) {
+	ctx, span := otel.Tracer(tracing.TracerName).Start(ctx, "GetOrder")
+	defer span.End()
+	logger := logging.FromContext(ctx)
+	logger.Info("GetOrder")
+	orderID := request.GetId()
+	order, err := db.GetOrder(ctx, orderID, s.dbConn)
+	if err != nil {
+		logger.WithError(err).Error("GetOrder error")
+
+		return nil, status.Error(codes.Internal, "Cant get order by id") //nolint:wrapcheck // should be wrapped as is
+	}
+
+	return &pb.OrderResponse{
+		Id:        orderID,
+		UserId:    order.UserID.String(),
+		Label:     order.Label,
+		CreatedAt: timestamppb.New(order.CreatedAt),
+	}, nil
 }
 
 func (s *OrderService) InsertOrder(ctx context.Context, order *pb.Order) (*pb.OrderTnxResponse, error) {
