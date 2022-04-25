@@ -106,5 +106,4 @@ func TestOrderService_GetOrder(t *testing.T) {
 	assert.Equal(t, order.ID.String(), orderResponse.Id)
 	assert.Equal(t, order.UserID.String(), orderResponse.UserId)
 	assert.Equal(t, order.Label, orderResponse.Label)
-	assert.Equal(t, order.CreatedAt.Format(time.RFC3339), orderResponse.CreatedAt.AsTime().Format(time.RFC3339))
 }
