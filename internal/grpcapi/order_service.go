@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"github.com/Sugar-pack/users-manager/pkg/logging"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -83,5 +85,26 @@ func (s *OrderService) InsertOrder(ctx context.Context, order *pb.Order) (*pb.Or
 	return &pb.OrderTnxResponse{
 		Id:  orderID.String(),
 		Tnx: txID.String(),
+	}, nil
+}
+
+func (s *OrderService) GetOrder(ctx context.Context, request *pb.GetOrderRequest) (*pb.OrderResponse, error) {
+	ctx, span := otel.Tracer(tracing.TracerName).Start(ctx, "GetOrder")
+	defer span.End()
+	logger := logging.FromContext(ctx)
+	logger.Info("GetOrder")
+	orderID := request.GetId()
+	order, err := db.GetOrder(ctx, orderID, s.dbConn)
+	if err != nil {
+		logger.WithError(err).Error("GetOrder error")
+
+		return nil, status.Error(codes.Internal, "Cant get order by id") //nolint:wrapcheck // should be wrapped as is
+	}
+
+	return &pb.OrderResponse{
+		Id:        orderID,
+		UserId:    order.UserID.String(),
+		Label:     order.Label,
+		CreatedAt: timestamppb.New(order.CreatedAt),
 	}, nil
 }
