@@ -4,6 +4,8 @@ import (
 	"context"
 	"net"
 
+	"github.com/Sugar-pack/orders-manager/internal/repository"
+
 	"github.com/Sugar-pack/users-manager/pkg/logging"
 	"github.com/jmoiron/sqlx"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -24,13 +26,16 @@ func CreateServer(logger logging.Logger, dbConn *sqlx.DB) (*grpc.Server, error) 
 		),
 	)
 
+	repo := repository.NewPsqlRepository(dbConn)
+
 	orderService := &OrderService{
 		dbConn: dbConn,
+		Repo:   repo,
 	}
 	pb.RegisterOrdersManagerServiceServer(grpcServer, orderService)
 
 	transactionService := &TnxConfirmingService{
-		dbConn: dbConn,
+		Repo: repo,
 	}
 	pb.RegisterTnxConfirmingServiceServer(grpcServer, transactionService)
 

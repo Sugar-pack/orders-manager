@@ -22,6 +22,7 @@ import (
 	"github.com/Sugar-pack/orders-manager/internal/config"
 	"github.com/Sugar-pack/orders-manager/internal/db"
 	"github.com/Sugar-pack/orders-manager/internal/migration"
+	"github.com/Sugar-pack/orders-manager/internal/repository"
 	"github.com/Sugar-pack/orders-manager/pkg/pb"
 )
 
@@ -29,6 +30,18 @@ const (
 	dbUser = "user_db"
 	dbName = "orders_db"
 )
+
+type NamedExecutorContext interface {
+	NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error)
+}
+
+func InsertOrder(t *testing.T, ctx context.Context, dbConn NamedExecutorContext, order *repository.Order) error {
+	t.Helper()
+	_, err := dbConn.NamedExecContext(ctx,
+		"INSERT INTO orders ( id,  user_id, label, created_at ) VALUES (:id, :user_id, :label, :created_at)", order)
+
+	return err //nolint:wrapcheck // should be wrapped in service layer
+}
 
 func PSQLResource(t *testing.T) (*dockertest.Pool, *dockertest.Resource) {
 	t.Helper()
@@ -164,14 +177,14 @@ func TestTnxConfirmingService_SendConfirmation_True(t *testing.T) {
 		}
 	}(testTx)
 
-	order := &db.Order{
+	order := &repository.Order{
 		ID:        uuid.New(),
 		UserID:    uuid.New(),
 		Label:     "e2e test",
 		CreatedAt: time.Time{},
 	}
 	txID := uuid.New().String()
-	err = db.InsertOrder(ctx, testTx, order)
+	err = InsertOrder(t, ctx, testTx, order)
 	if err != nil {
 		t.Fatalf("insert order failed: '%s'", err)
 	}
@@ -245,14 +258,14 @@ func TestTnxConfirmingService_SendConfirmation_False(t *testing.T) {
 		}
 	}(testTx)
 
-	order := &db.Order{
+	order := &repository.Order{
 		ID:        uuid.New(),
 		UserID:    uuid.New(),
 		Label:     "e2e test",
 		CreatedAt: time.Time{},
 	}
 	txID := uuid.New().String()
-	err = db.InsertOrder(ctx, testTx, order)
+	err = InsertOrder(t, ctx, testTx, order)
 	if err != nil {
 		t.Fatalf("insert order failed: '%s'", err)
 	}

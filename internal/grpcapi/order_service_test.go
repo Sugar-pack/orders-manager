@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Sugar-pack/orders-manager/internal/repository"
+
 	"github.com/Sugar-pack/users-manager/pkg/logging"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -86,7 +88,7 @@ func TestOrderService_GetOrder(t *testing.T) {
 
 	orderClient := pb.NewOrdersManagerServiceClient(grpcConn)
 
-	order := db.Order{
+	order := repository.Order{
 		ID:        uuid.New(),
 		UserID:    uuid.New(),
 		Label:     "test",
