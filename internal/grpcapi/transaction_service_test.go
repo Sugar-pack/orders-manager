@@ -171,7 +171,7 @@ func TestTnxConfirmingService_SendConfirmation_True(t *testing.T) {
 		CreatedAt: time.Time{},
 	}
 	txID := uuid.New().String()
-	err = db.InsertUser(ctx, testTx, order)
+	err = db.InsertOrder(ctx, testTx, order)
 	if err != nil {
 		t.Fatalf("insert order failed: '%s'", err)
 	}
@@ -252,7 +252,7 @@ func TestTnxConfirmingService_SendConfirmation_False(t *testing.T) {
 		CreatedAt: time.Time{},
 	}
 	txID := uuid.New().String()
-	err = db.InsertUser(ctx, testTx, order)
+	err = db.InsertOrder(ctx, testTx, order)
 	if err != nil {
 		t.Fatalf("insert order failed: '%s'", err)
 	}

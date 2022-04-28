@@ -21,7 +21,7 @@ type NamedExecutorContext interface {
 	NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error)
 }
 
-func InsertUser(ctx context.Context, dbConn NamedExecutorContext, order *Order) error {
+func InsertOrder(ctx context.Context, dbConn NamedExecutorContext, order *Order) error {
 	_, err := dbConn.NamedExecContext(ctx,
 		"INSERT INTO orders ( id,  user_id, label, created_at ) VALUES (:id, :user_id, :label, :created_at)", order)
 
