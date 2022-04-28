@@ -21,5 +21,5 @@ type OrderRepoWith2PC interface {
 
 	RollbackInsertTransaction(ctx context.Context, txID uuid.UUID) error
 
-	GetOrder(ctx context.Context, id string) (*Order, error)
+	GetOrder(ctx context.Context, id uuid.UUID) (*Order, error)
 }

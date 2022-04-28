@@ -65,9 +65,9 @@ func (p *PsqlRepository) RollbackInsertTransaction(ctx context.Context, txID uui
 	return err
 }
 
-func (p *PsqlRepository) GetOrder(ctx context.Context, id string) (*Order, error) {
+func (p *PsqlRepository) GetOrder(ctx context.Context, id uuid.UUID) (*Order, error) {
 	var order Order
-	err := sqlx.GetContext(ctx, p.db, &order, "SELECT * FROM orders WHERE id = $1", id)
+	err := sqlx.GetContext(ctx, p.db, &order, "SELECT * FROM orders WHERE id = $1", id.String())
 
 	return &order, err
 }

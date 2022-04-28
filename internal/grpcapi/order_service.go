@@ -60,7 +60,13 @@ func (s *OrderService) GetOrder(ctx context.Context, request *pb.GetOrderRequest
 	logger := logging.FromContext(ctx)
 	logger.Info("GetOrder")
 	orderID := request.GetId()
-	order, err := s.Repo.GetOrder(ctx, orderID)
+	parseOrderID, err := uuid.Parse(orderID)
+	if err != nil {
+		logger.WithError(err).Error("Error parsing order id")
+
+		return nil, status.Error(codes.Internal, "error parsing order id") //nolint:wrapcheck // should be wrapped as is
+	}
+	order, err := s.Repo.GetOrder(ctx, parseOrderID)
 	if err != nil {
 		logger.WithError(err).Error("GetOrder error")
 

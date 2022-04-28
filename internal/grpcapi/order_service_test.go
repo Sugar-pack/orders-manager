@@ -205,3 +205,73 @@ func TestOrderService_InsertOrder_OK(t *testing.T) {
 	assert.NoError(t, errInsert)
 	assert.NotNil(t, insertOrder)
 }
+
+func TestOrderService_GetOrder_ParseErr(t *testing.T) {
+	ctx := context.Background()
+	logger := logging.GetLogger()
+	ctx = logging.WithContext(ctx, logger)
+	mockRepo := &mock.OrderRepoWith2PC{}
+	orderService := OrderService{
+		Repo: mockRepo,
+	}
+
+	orderID := "definitely not a uuid"
+	order := &pb.GetOrderRequest{Id: orderID}
+
+	orderResponse, err := orderService.GetOrder(ctx, order)
+
+	assert.Error(t, err)
+	assert.Nil(t, orderResponse)
+
+}
+
+func TestOrderService_GetOrder_GetError(t *testing.T) {
+	ctx := context.Background()
+	logger := logging.GetLogger()
+	ctx = logging.WithContext(ctx, logger)
+	mockRepo := &mock.OrderRepoWith2PC{}
+	orderService := OrderService{
+		Repo: mockRepo,
+	}
+
+	orderID := uuid.New()
+	order := &pb.GetOrderRequest{Id: orderID.String()}
+
+	mockRepo.On("GetOrder", testify.AnythingOfType("*context.valueCtx"), orderID).
+		Return(nil, errors.New("get error"))
+
+	orderResponse, err := orderService.GetOrder(ctx, order)
+
+	assert.Error(t, err)
+	assert.Nil(t, orderResponse)
+}
+
+func TestOrderService_GetOrder_OK(t *testing.T) {
+	ctx := context.Background()
+	logger := logging.GetLogger()
+	ctx = logging.WithContext(ctx, logger)
+	mockRepo := &mock.OrderRepoWith2PC{}
+	orderService := OrderService{
+		Repo: mockRepo,
+	}
+
+	orderID := uuid.New()
+	order := &pb.GetOrderRequest{Id: orderID.String()}
+
+	orderDB := &repository.Order{
+		ID:        orderID,
+		UserID:    uuid.New(),
+		Label:     "label",
+		CreatedAt: time.Now().UTC(),
+	}
+	mockRepo.On("GetOrder", testify.AnythingOfType("*context.valueCtx"), orderID).
+		Return(orderDB, nil)
+
+	orderResponse, err := orderService.GetOrder(ctx, order)
+
+	assert.NoError(t, err)
+	assert.Equal(t, orderDB.ID.String(), orderResponse.Id)
+	assert.Equal(t, orderDB.UserID.String(), orderResponse.UserId)
+	assert.Equal(t, orderDB.Label, orderResponse.Label)
+	assert.Equal(t, orderDB.CreatedAt.Format(time.RFC3339), orderResponse.CreatedAt.AsTime().Format(time.RFC3339))
+}

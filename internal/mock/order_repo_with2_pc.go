@@ -33,11 +33,11 @@ func (_m *OrderRepoWith2PC) CommitInsertTransaction(ctx context.Context, txID uu
 }
 
 // GetOrder provides a mock function with given fields: ctx, id
-func (_m *OrderRepoWith2PC) GetOrder(ctx context.Context, id string) (*repository.Order, error) {
+func (_m *OrderRepoWith2PC) GetOrder(ctx context.Context, id uuid.UUID) (*repository.Order, error) {
 	ret := _m.Called(ctx, id)
 
 	var r0 *repository.Order
-	if rf, ok := ret.Get(0).(func(context.Context, string) *repository.Order); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) *repository.Order); ok {
 		r0 = rf(ctx, id)
 	} else {
 		if ret.Get(0) != nil {
@@ -46,7 +46,7 @@ func (_m *OrderRepoWith2PC) GetOrder(ctx context.Context, id string) (*repositor
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
 		r1 = rf(ctx, id)
 	} else {
 		r1 = ret.Error(1)
