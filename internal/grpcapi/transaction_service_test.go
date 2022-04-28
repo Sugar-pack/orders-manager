@@ -10,6 +10,10 @@ import (
 	"testing"
 	"time"
 
+	testify "github.com/stretchr/testify/mock"
+
+	"github.com/Sugar-pack/orders-manager/internal/mock"
+
 	"github.com/Sugar-pack/users-manager/pkg/logging"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -300,4 +304,103 @@ func TestTnxConfirmingService_SendConfirmation_False(t *testing.T) {
 	err = dbConn.QueryRowxContext(ctx, `SELECT gid FROM pg_prepared_xacts WHERE gid = $1`, txID).Scan(&dbTxId)
 	assert.ErrorIs(t, err, sql.ErrNoRows, "order should not exist")
 
+}
+
+// unit test
+
+func TestTnxConfirmingService_SendConfirmation_ParseError(t *testing.T) {
+	ctx := context.Background()
+	logger := logging.GetLogger()
+	ctx = logging.WithContext(ctx, logger)
+	mockRepo := &mock.OrderRepoWith2PC{}
+	transactionService := TnxConfirmingService{
+		Repo: mockRepo,
+	}
+	confirmation := &pb.Confirmation{
+		Tnx:    "definitely not a uuid",
+		Commit: false,
+	}
+	sendConfirmation, err := transactionService.SendConfirmation(ctx, confirmation)
+	assert.Error(t, err)
+	assert.Nil(t, sendConfirmation)
+}
+
+func TestTnxConfirmingService_SendConfirmation_CommitError(t *testing.T) {
+	ctx := context.Background()
+	logger := logging.GetLogger()
+	ctx = logging.WithContext(ctx, logger)
+	mockRepo := &mock.OrderRepoWith2PC{}
+	transactionService := TnxConfirmingService{
+		Repo: mockRepo,
+	}
+	txID := uuid.New()
+	confirmation := &pb.Confirmation{
+		Tnx:    txID.String(),
+		Commit: true,
+	}
+	mockRepo.On("CommitInsertTransaction", testify.AnythingOfType("*context.valueCtx"), txID).Return(errors.New("commit error"))
+
+	sendConfirmation, err := transactionService.SendConfirmation(ctx, confirmation)
+	assert.Error(t, err)
+	assert.Nil(t, sendConfirmation)
+}
+
+func TestTnxConfirmingService_SendConfirmation_RollbackError(t *testing.T) {
+	ctx := context.Background()
+	logger := logging.GetLogger()
+	ctx = logging.WithContext(ctx, logger)
+	mockRepo := &mock.OrderRepoWith2PC{}
+	transactionService := TnxConfirmingService{
+		Repo: mockRepo,
+	}
+	txID := uuid.New()
+	confirmation := &pb.Confirmation{
+		Tnx:    txID.String(),
+		Commit: false,
+	}
+	mockRepo.On("RollbackInsertTransaction", testify.AnythingOfType("*context.valueCtx"), txID).Return(errors.New("rollback error"))
+
+	sendConfirmation, err := transactionService.SendConfirmation(ctx, confirmation)
+	assert.Error(t, err)
+	assert.Nil(t, sendConfirmation)
+}
+
+func TestTnxConfirmingService_SendConfirmation_CommitOk(t *testing.T) {
+	ctx := context.Background()
+	logger := logging.GetLogger()
+	ctx = logging.WithContext(ctx, logger)
+	mockRepo := &mock.OrderRepoWith2PC{}
+	transactionService := TnxConfirmingService{
+		Repo: mockRepo,
+	}
+	txID := uuid.New()
+	confirmation := &pb.Confirmation{
+		Tnx:    txID.String(),
+		Commit: true,
+	}
+	mockRepo.On("CommitInsertTransaction", testify.AnythingOfType("*context.valueCtx"), txID).Return(nil)
+
+	sendConfirmation, err := transactionService.SendConfirmation(ctx, confirmation)
+	assert.NoError(t, err)
+	assert.NotNil(t, sendConfirmation)
+}
+
+func TestTnxConfirmingService_SendConfirmation_RollbackOk(t *testing.T) {
+	ctx := context.Background()
+	logger := logging.GetLogger()
+	ctx = logging.WithContext(ctx, logger)
+	mockRepo := &mock.OrderRepoWith2PC{}
+	transactionService := TnxConfirmingService{
+		Repo: mockRepo,
+	}
+	txID := uuid.New()
+	confirmation := &pb.Confirmation{
+		Tnx:    txID.String(),
+		Commit: false,
+	}
+	mockRepo.On("RollbackInsertTransaction", testify.AnythingOfType("*context.valueCtx"), txID).Return(nil)
+
+	sendConfirmation, err := transactionService.SendConfirmation(ctx, confirmation)
+	assert.NoError(t, err)
+	assert.NotNil(t, sendConfirmation)
 }
