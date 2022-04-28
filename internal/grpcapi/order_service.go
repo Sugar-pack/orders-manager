@@ -3,25 +3,21 @@ package grpcapi
 import (
 	"context"
 
-	"github.com/Sugar-pack/orders-manager/internal/repository"
-
-	"google.golang.org/protobuf/types/known/timestamppb"
-
 	"github.com/Sugar-pack/users-manager/pkg/logging"
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
 	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/Sugar-pack/orders-manager/internal/repository"
 	"github.com/Sugar-pack/orders-manager/internal/tracing"
 	"github.com/Sugar-pack/orders-manager/pkg/pb"
 )
 
 type OrderService struct {
 	pb.OrdersManagerServiceServer
-	dbConn *sqlx.DB
-	Repo   repository.OrderRepoWith2PC
+	Repo repository.OrderRepoWith2PC
 }
 
 func (s *OrderService) InsertOrder(ctx context.Context, order *pb.Order) (*pb.OrderTnxResponse, error) {

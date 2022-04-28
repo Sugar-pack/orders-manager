@@ -118,7 +118,8 @@ func GRPCConnection(ctx context.Context, t *testing.T, dbConn *sqlx.DB, address 
 	t.Helper()
 
 	logger := logging.FromContext(ctx)
-	grpcServer, err := CreateServer(logger, dbConn)
+	repo := repository.NewPsqlRepository(dbConn)
+	grpcServer, err := CreateServer(logger, repo)
 	if err != nil {
 		t.Fatalf("create grpc server failed: '%s'", err)
 	}

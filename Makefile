@@ -21,3 +21,7 @@ test: ## Run tests
 
 test-coverage: ## Run go test with coverage
 	go test ./... -coverprofile=coverage.out `go list ./...`
+
+.PHONY: gen-mocks
+gen-mocks:
+	@docker run -v `pwd`:/src -w /src vektra/mockery --case snake --dir internal/repository --output internal/mock --outpkg mock --all

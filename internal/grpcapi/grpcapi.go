@@ -4,19 +4,17 @@ import (
 	"context"
 	"net"
 
-	"github.com/Sugar-pack/orders-manager/internal/repository"
-
 	"github.com/Sugar-pack/users-manager/pkg/logging"
-	"github.com/jmoiron/sqlx"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 
 	"github.com/Sugar-pack/orders-manager/internal/config"
+	"github.com/Sugar-pack/orders-manager/internal/repository"
 	"github.com/Sugar-pack/orders-manager/internal/tracing"
 	"github.com/Sugar-pack/orders-manager/pkg/pb"
 )
 
-func CreateServer(logger logging.Logger, dbConn *sqlx.DB) (*grpc.Server, error) {
+func CreateServer(logger logging.Logger, repo repository.OrderRepoWith2PC) (*grpc.Server, error) {
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			logging.WithLogger(logger),
@@ -26,11 +24,8 @@ func CreateServer(logger logging.Logger, dbConn *sqlx.DB) (*grpc.Server, error) 
 		),
 	)
 
-	repo := repository.NewPsqlRepository(dbConn)
-
 	orderService := &OrderService{
-		dbConn: dbConn,
-		Repo:   repo,
+		Repo: repo,
 	}
 	pb.RegisterOrdersManagerServiceServer(grpcServer, orderService)
 
