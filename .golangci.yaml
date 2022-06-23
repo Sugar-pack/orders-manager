@@ -783,6 +783,7 @@ linters:
     - unused
     - exhaustruct
     - exhaustivestruct
+    - nonamedreturns
 #  presets:
 #    - bugs
 #    - unused
