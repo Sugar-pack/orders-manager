@@ -1,0 +1,4 @@
+ignore:
+  - "internal/mock/"
+  - "pkg"
+  - "**/mock_*.go"

@@ -10,6 +10,7 @@ import (
 	"github.com/Sugar-pack/orders-manager/internal/db"
 	"github.com/Sugar-pack/orders-manager/internal/grpcapi"
 	"github.com/Sugar-pack/orders-manager/internal/migration"
+	"github.com/Sugar-pack/orders-manager/internal/repository"
 )
 
 func main() {
@@ -37,7 +38,9 @@ func main() {
 		return
 	}
 
-	server, err := grpcapi.CreateServer(logger, dbConn)
+	repo := repository.NewPsqlRepository(dbConn)
+
+	server, err := grpcapi.CreateServer(logger, repo)
 	if err != nil {
 		log.Fatal(err)
 
