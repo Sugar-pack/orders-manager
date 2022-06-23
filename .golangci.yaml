@@ -781,6 +781,9 @@ linters:
     - unparam
     - wastedassign
     - unused
+    - exhaustruct
+    - exhaustivestruct
+    - nonamedreturns
 #  presets:
 #    - bugs
 #    - unused
