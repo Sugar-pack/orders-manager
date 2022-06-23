@@ -10,6 +10,10 @@ import (
 	"testing"
 	"time"
 
+	testify "github.com/stretchr/testify/mock"
+
+	"github.com/Sugar-pack/orders-manager/internal/mock"
+
 	"github.com/Sugar-pack/users-manager/pkg/logging"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -22,6 +26,7 @@ import (
 	"github.com/Sugar-pack/orders-manager/internal/config"
 	"github.com/Sugar-pack/orders-manager/internal/db"
 	"github.com/Sugar-pack/orders-manager/internal/migration"
+	"github.com/Sugar-pack/orders-manager/internal/repository"
 	"github.com/Sugar-pack/orders-manager/pkg/pb"
 )
 
@@ -29,6 +34,18 @@ const (
 	dbUser = "user_db"
 	dbName = "orders_db"
 )
+
+type NamedExecutorContext interface {
+	NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error)
+}
+
+func InsertOrder(t *testing.T, ctx context.Context, dbConn NamedExecutorContext, order *repository.Order) error {
+	t.Helper()
+	_, err := dbConn.NamedExecContext(ctx,
+		"INSERT INTO orders ( id,  user_id, label, created_at ) VALUES (:id, :user_id, :label, :created_at)", order)
+
+	return err //nolint:wrapcheck // should be wrapped in service layer
+}
 
 func PSQLResource(t *testing.T) (*dockertest.Pool, *dockertest.Resource) {
 	t.Helper()
@@ -105,7 +122,8 @@ func GRPCConnection(ctx context.Context, t *testing.T, dbConn *sqlx.DB, address 
 	t.Helper()
 
 	logger := logging.FromContext(ctx)
-	grpcServer, err := CreateServer(logger, dbConn)
+	repo := repository.NewPsqlRepository(dbConn)
+	grpcServer, err := CreateServer(logger, repo)
 	if err != nil {
 		t.Fatalf("create grpc server failed: '%s'", err)
 	}
@@ -164,14 +182,14 @@ func TestTnxConfirmingService_SendConfirmation_True(t *testing.T) {
 		}
 	}(testTx)
 
-	order := &db.Order{
+	order := &repository.Order{
 		ID:        uuid.New(),
 		UserID:    uuid.New(),
 		Label:     "e2e test",
 		CreatedAt: time.Time{},
 	}
 	txID := uuid.New().String()
-	err = db.InsertUser(ctx, testTx, order)
+	err = InsertOrder(t, ctx, testTx, order)
 	if err != nil {
 		t.Fatalf("insert order failed: '%s'", err)
 	}
@@ -245,14 +263,14 @@ func TestTnxConfirmingService_SendConfirmation_False(t *testing.T) {
 		}
 	}(testTx)
 
-	order := &db.Order{
+	order := &repository.Order{
 		ID:        uuid.New(),
 		UserID:    uuid.New(),
 		Label:     "e2e test",
 		CreatedAt: time.Time{},
 	}
 	txID := uuid.New().String()
-	err = db.InsertUser(ctx, testTx, order)
+	err = InsertOrder(t, ctx, testTx, order)
 	if err != nil {
 		t.Fatalf("insert order failed: '%s'", err)
 	}
@@ -286,4 +304,103 @@ func TestTnxConfirmingService_SendConfirmation_False(t *testing.T) {
 	err = dbConn.QueryRowxContext(ctx, `SELECT gid FROM pg_prepared_xacts WHERE gid = $1`, txID).Scan(&dbTxId)
 	assert.ErrorIs(t, err, sql.ErrNoRows, "order should not exist")
 
+}
+
+// unit test
+
+func TestTnxConfirmingService_SendConfirmation_ParseError(t *testing.T) {
+	ctx := context.Background()
+	logger := logging.GetLogger()
+	ctx = logging.WithContext(ctx, logger)
+	mockRepo := &mock.OrderRepoWith2PC{}
+	transactionService := TnxConfirmingService{
+		Repo: mockRepo,
+	}
+	confirmation := &pb.Confirmation{
+		Tnx:    "definitely not a uuid",
+		Commit: false,
+	}
+	sendConfirmation, err := transactionService.SendConfirmation(ctx, confirmation)
+	assert.Error(t, err)
+	assert.Nil(t, sendConfirmation)
+}
+
+func TestTnxConfirmingService_SendConfirmation_CommitError(t *testing.T) {
+	ctx := context.Background()
+	logger := logging.GetLogger()
+	ctx = logging.WithContext(ctx, logger)
+	mockRepo := &mock.OrderRepoWith2PC{}
+	transactionService := TnxConfirmingService{
+		Repo: mockRepo,
+	}
+	txID := uuid.New()
+	confirmation := &pb.Confirmation{
+		Tnx:    txID.String(),
+		Commit: true,
+	}
+	mockRepo.On("CommitInsertTransaction", testify.AnythingOfType("*context.valueCtx"), txID).Return(errors.New("commit error"))
+
+	sendConfirmation, err := transactionService.SendConfirmation(ctx, confirmation)
+	assert.Error(t, err)
+	assert.Nil(t, sendConfirmation)
+}
+
+func TestTnxConfirmingService_SendConfirmation_RollbackError(t *testing.T) {
+	ctx := context.Background()
+	logger := logging.GetLogger()
+	ctx = logging.WithContext(ctx, logger)
+	mockRepo := &mock.OrderRepoWith2PC{}
+	transactionService := TnxConfirmingService{
+		Repo: mockRepo,
+	}
+	txID := uuid.New()
+	confirmation := &pb.Confirmation{
+		Tnx:    txID.String(),
+		Commit: false,
+	}
+	mockRepo.On("RollbackInsertTransaction", testify.AnythingOfType("*context.valueCtx"), txID).Return(errors.New("rollback error"))
+
+	sendConfirmation, err := transactionService.SendConfirmation(ctx, confirmation)
+	assert.Error(t, err)
+	assert.Nil(t, sendConfirmation)
+}
+
+func TestTnxConfirmingService_SendConfirmation_CommitOk(t *testing.T) {
+	ctx := context.Background()
+	logger := logging.GetLogger()
+	ctx = logging.WithContext(ctx, logger)
+	mockRepo := &mock.OrderRepoWith2PC{}
+	transactionService := TnxConfirmingService{
+		Repo: mockRepo,
+	}
+	txID := uuid.New()
+	confirmation := &pb.Confirmation{
+		Tnx:    txID.String(),
+		Commit: true,
+	}
+	mockRepo.On("CommitInsertTransaction", testify.AnythingOfType("*context.valueCtx"), txID).Return(nil)
+
+	sendConfirmation, err := transactionService.SendConfirmation(ctx, confirmation)
+	assert.NoError(t, err)
+	assert.NotNil(t, sendConfirmation)
+}
+
+func TestTnxConfirmingService_SendConfirmation_RollbackOk(t *testing.T) {
+	ctx := context.Background()
+	logger := logging.GetLogger()
+	ctx = logging.WithContext(ctx, logger)
+	mockRepo := &mock.OrderRepoWith2PC{}
+	transactionService := TnxConfirmingService{
+		Repo: mockRepo,
+	}
+	txID := uuid.New()
+	confirmation := &pb.Confirmation{
+		Tnx:    txID.String(),
+		Commit: false,
+	}
+	mockRepo.On("RollbackInsertTransaction", testify.AnythingOfType("*context.valueCtx"), txID).Return(nil)
+
+	sendConfirmation, err := transactionService.SendConfirmation(ctx, confirmation)
+	assert.NoError(t, err)
+	assert.NotNil(t, sendConfirmation)
 }
