@@ -43,7 +43,7 @@ func ServeWithTrace(ctx context.Context, server *grpc.Server, appConfig *config.
 	if err != nil {
 		return err //nolint:wrapcheck //should be wrapped in main
 	}
-	tracingProvider, err := tracing.InitJaegerTracing(logger)
+	tracingProvider, err := tracing.InitTracing(ctx, logger)
 	if err != nil {
 		return err //nolint:wrapcheck //should be wrapped in main
 	}

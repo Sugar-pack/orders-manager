@@ -1,9 +1,11 @@
 package tracing
 
 import (
+	"context"
+
 	"github.com/Sugar-pack/users-manager/pkg/logging"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
@@ -11,10 +13,8 @@ import (
 
 const TracerName = "order-manager"
 
-func newExporter() (trace.SpanExporter, error) {
-	return jaeger.New( //nolint:wrapcheck // too simple to wrap
-		jaeger.WithCollectorEndpoint(),
-	)
+func newExporter(ctx context.Context) (trace.SpanExporter, error) {
+	return otlptracegrpc.New(ctx) //nolint:wrapcheck // too simple to wrap
 }
 
 func newResource() (*resource.Resource, error) {
@@ -26,10 +26,10 @@ func newResource() (*resource.Resource, error) {
 	return tracingResource, err //nolint:wrapcheck // err can be nil
 }
 
-func InitJaegerTracing(logger logging.Logger) (*trace.TracerProvider, error) {
-	jaegerExporter, err := newExporter()
+func InitTracing(ctx context.Context, logger logging.Logger) (*trace.TracerProvider, error) {
+	otlpExporter, err := newExporter(ctx)
 	if err != nil {
-		logger.WithError(err).Error("create jaeger exporter failed")
+		logger.WithError(err).Error("create otlp exporter failed")
 
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func InitJaegerTracing(logger logging.Logger) (*trace.TracerProvider, error) {
 	}
 
 	tracingProvider := trace.NewTracerProvider(
-		trace.WithBatcher(jaegerExporter),
+		trace.WithBatcher(otlpExporter),
 		trace.WithResource(tracingResource),
 		trace.WithSampler(trace.AlwaysSample()),
 	)
