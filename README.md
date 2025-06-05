@@ -4,14 +4,20 @@
 [![CodeQL](https://github.com/Sugar-pack/orders-manager/actions/workflows/codeql.yml/badge.svg)](https://github.com/Sugar-pack/orders-manager/actions/workflows/codeql.yml)
 [![codecov](https://codecov.io/gh/Sugar-pack/orders-manager/branch/main/graph/badge.svg?token=VEXDJ58WWI)](https://codecov.io/gh/Sugar-pack/orders-manager)
 
+## Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/)
+- [Docker Compose](https://docs.docker.com/compose/install/)
+- [Go](https://golang.org/dl/)
+- [protoc](https://github.com/protocolbuffers/protobuf/releases)
+
 ## Development
 
 ```bash
 go install -v google.golang.org/protobuf/cmd/protoc-gen-go@latest
 go install -v google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
-protoc --go_out=. --go-grpc_out=. proto/users.proto
-protoc --go_out=. --go-grpc_out=. proto/distributedTx.proto
+protoc --go_out=. --go-grpc_out=. api/api.proto
 ```
 ## Launch
 
