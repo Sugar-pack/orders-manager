@@ -14,7 +14,11 @@ func TestGetAppConfig_FileNotFound(t *testing.T) {
 	if err != nil {
 		t.Fatalf("getwd failed: %v", err)
 	}
-	defer os.Chdir(prev)
+	t.Cleanup(func() {
+		if err := os.Chdir(prev); err != nil {
+			t.Fatalf("restore wd: %v", err)
+		}
+	})
 	if err := os.Chdir(dir); err != nil {
 		t.Fatalf("chdir failed: %v", err)
 	}
@@ -30,7 +34,11 @@ func TestGetAppConfig_SuccessWithEnvOverride(t *testing.T) {
 	if err != nil {
 		t.Fatalf("getwd failed: %v", err)
 	}
-	defer os.Chdir(prev)
+	t.Cleanup(func() {
+		if err := os.Chdir(prev); err != nil {
+			t.Fatalf("restore wd: %v", err)
+		}
+	})
 	if err := os.Chdir(dir); err != nil {
 		t.Fatalf("chdir failed: %v", err)
 	}
@@ -56,7 +64,11 @@ func TestGetAppConfig_UnmarshalError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("getwd failed: %v", err)
 	}
-	defer os.Chdir(prev)
+	t.Cleanup(func() {
+		if err := os.Chdir(prev); err != nil {
+			t.Fatalf("restore wd: %v", err)
+		}
+	})
 	if err := os.Chdir(dir); err != nil {
 		t.Fatalf("chdir failed: %v", err)
 	}
