@@ -19,7 +19,7 @@ import (
 	"github.com/Sugar-pack/orders-manager/pkg/pb"
 )
 
-//e2e test
+// e2e test
 func TestOrderService_InsertOrder_e2e(t *testing.T) {
 	logger := logging.GetLogger()
 	ctx := logging.WithContext(context.Background(), logger)
@@ -64,7 +64,7 @@ func TestOrderService_InsertOrder_e2e(t *testing.T) {
 	assert.Equal(t, txID, dbTxId, "unexpected db tx id value")
 }
 
-//e2e test
+// e2e test
 func TestOrderService_GetOrder(t *testing.T) {
 	logger := logging.GetLogger()
 	ctx := logging.WithContext(context.Background(), logger)
@@ -161,7 +161,7 @@ func TestOrderService_InsertOrder_PrepareError(t *testing.T) {
 	err := errors.New("prepare error")
 	mockRepo.On("PrepareInsertOrder", testify.AnythingOfType("*context.valueCtx"),
 		testify.MatchedBy(func(order *repository.Order) bool {
-			return order.CreatedAt == orderDB.CreatedAt && order.UserID == orderDB.UserID && order.Label == orderDB.Label
+			return order.CreatedAt.Equal(orderDB.CreatedAt) && order.UserID == orderDB.UserID && order.Label == orderDB.Label
 		}),
 		testify.AnythingOfType("uuid.UUID")).Return(err)
 
@@ -197,7 +197,7 @@ func TestOrderService_InsertOrder_OK(t *testing.T) {
 
 	mockRepo.On("PrepareInsertOrder", testify.AnythingOfType("*context.valueCtx"),
 		testify.MatchedBy(func(order *repository.Order) bool {
-			return order.CreatedAt == orderDB.CreatedAt && order.UserID == orderDB.UserID && order.Label == orderDB.Label
+			return order.CreatedAt.Equal(orderDB.CreatedAt) && order.UserID == orderDB.UserID && order.Label == orderDB.Label
 		}),
 		testify.AnythingOfType("uuid.UUID")).Return(nil)
 
