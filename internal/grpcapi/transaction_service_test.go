@@ -145,7 +145,7 @@ func GRPCConnection(ctx context.Context, t *testing.T, dbConn *sqlx.DB, address 
 	return grpcConn
 }
 
-//e2e test
+// e2e test
 func TestTnxConfirmingService_SendConfirmation_True(t *testing.T) {
 	logger := logging.GetLogger()
 	ctx := logging.WithContext(context.Background(), logger)
@@ -226,7 +226,7 @@ func TestTnxConfirmingService_SendConfirmation_True(t *testing.T) {
 	assert.Equal(t, order.CreatedAt.Format(time.RFC3339), createdAt, "order created at should be equal")
 }
 
-//e2e test
+// e2e test
 func TestTnxConfirmingService_SendConfirmation_False(t *testing.T) {
 	logger := logging.GetLogger()
 	ctx := logging.WithContext(context.Background(), logger)

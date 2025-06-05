@@ -27,8 +27,8 @@ func Connect(ctx context.Context, conf *config.DB) (*sqlx.DB, error) {
 
 		return nil, fmt.Errorf("unable to connect to database %w", err)
 	}
-	conn.DB.SetMaxOpenConns(conf.MaxOpenCons)
-	conn.DB.SetConnMaxLifetime(conf.ConnMaxLifetime)
+	conn.SetMaxOpenConns(conf.MaxOpenCons)
+	conn.SetConnMaxLifetime(conf.ConnMaxLifetime)
 
 	return conn, nil
 }

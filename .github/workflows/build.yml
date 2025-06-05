@@ -36,4 +36,4 @@ jobs:
         run: make docker-build
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v8
