@@ -3,6 +3,7 @@ module github.com/Sugar-pack/orders-manager
 go 1.24.3
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/Sugar-pack/users-manager v0.0.0-20230221115812-7ed358782f6e
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v4 v4.18.3
