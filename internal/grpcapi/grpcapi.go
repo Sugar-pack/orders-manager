@@ -20,8 +20,8 @@ func CreateServer(logger logging.Logger, repo repository.OrderRepoWith2PC) (*grp
 			logging.WithLogger(logger),
 			logging.WithUniqTraceID,
 			logging.LogBoundaries,
-			otelgrpc.UnaryServerInterceptor(),
 		),
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 	)
 
 	orderService := &OrderService{

@@ -138,7 +138,7 @@ func GRPCConnection(ctx context.Context, t *testing.T, dbConn *sqlx.DB, address 
 		}
 	}()
 
-	grpcConn, err := grpc.DialContext(ctx, address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	grpcConn, err := grpc.DialContext(ctx, address, grpc.WithTransportCredentials(insecure.NewCredentials())) //nolint:staticcheck // grpc.DialContext is deprecated but acceptable for tests
 	if err != nil {
 		t.Fatalf("dial failed: '%s'", err)
 	}
